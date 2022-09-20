@@ -1,0 +1,133 @@
+<html>
+<head>
+    <title>Magimport</title>
+
+    <style>
+
+    nav {
+        position: fixed;
+        top: 0;
+        height: 40px;
+        left: 0;
+        right: 0;
+        background-color: #111;
+        color: #fff;
+        display: block;
+        box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+
+    }
+
+    #input-book, #result { 
+        position: fixed;
+        top: 40px;
+        bottom: 230px;
+        box-sizing: border-box;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    #editor {
+        margin-top: 20px;
+        position: fixed;
+        right: 0; 
+        left: 0;
+        bottom: 0;
+        height: 230px;
+        box-sizing: border-box;
+    }
+    #input-book { width: 50vw; left: 0px; }
+    #result { width: 50vw; right: 0px; }
+    #input-book, #result { padding: 20px; border-left: 1px solid #999;}
+    pre {white-space: pre-wrap; }
+    
+    button#copy{
+        position: fixed;
+        right: 10px; 
+        top: 50px;
+        z-index: 100;
+    }
+
+    button#run{
+        position: fixed;
+        right: 10px; 
+        bottom: 200px;
+        z-index: 100;
+    }
+
+    </style>
+
+</head>
+<body>
+<nav>
+</nav>
+<button id="copy" onclick="navigator.clipboard.writeText(result.innerText)">copy</button>
+<button id="run" onclick="window.run()">run (ctrl+r)</button>
+<div id="input-book" contenteditable="true">
+
+
+</div>
+<div id="result">
+
+</div>
+<div id="editor"></div>
+
+<script src="./ace-builds-master/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+
+window.result = document.getElementById('result')
+var editor = ace.edit("editor");
+editor.setTheme("ace/theme/monokai");
+editor.setOptions({
+    fontSize: 18,
+})
+editor.session.setMode("ace/mode/javascript");
+
+
+// Store and reload input book and editor code
+document.getElementById('input-book').innerHTML = localStorage['magimport-input-book'] || ''
+document.getElementById('input-book').oninput = (e) => {
+    localStorage['magimport-input-book'] = e.target.innerHTML
+}
+
+editor.setValue( localStorage['magimport-editor'] || `
+`, -1)
+editor.session.on('change', function(delta) {
+    localStorage['magimport-editor'] = editor.getValue();
+});
+
+window.run = () => {
+    try{
+        const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+        const fn = new AsyncFunction(editor.getValue())
+
+        result.innerHTML = document.getElementById('input-book').innerHTML
+        fn()
+    }catch(e){
+        console.error(e);
+    }
+    return
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.ctrlKey && event.key === 'r') {
+    window.run()
+    event.preventDefault();
+    return false
+  }
+  if (event.ctrlKey && event.key === 's') {
+    window.run()
+    event.preventDefault();
+    return false
+  }
+});
+
+
+window.run()
+
+
+
+</script>
+
+
+</body>
+</html>
